@@ -1,0 +1,85 @@
+apiVersion: "agones.dev/v1"
+kind: Fleet
+metadata:
+  name: space-engineers
+  namespace: gameservers
+spec:
+  # the number of GameServers to keep Ready or Allocated in this Fleet
+  replicas: 1
+  # defines how GameServers are organised across the cluster.
+  # Options include:
+  # "Packed" (default) is aimed at dynamic Kubernetes clusters, such as cloud providers, wherein we want to bin pack
+  # resources
+  # "Distributed" is aimed at static Kubernetes clusters, wherein we want to distribute resources across the entire
+  # cluster
+  scheduling: Packed
+  # a GameServer template - see:
+  # https://agones.dev/site/docs/reference/gameserver/ for all the options
+  strategy:
+    type: Recreate 
+  template:
+    # GameServer specification
+    spec:
+      ports:
+      - name: default
+        portPolicy: Static
+        hostPort: 27016
+        containerPort: 27016
+        protocol: UDP
+      - name: remote-api
+        portPolicy: Dynamic
+        containerPort: 8080
+        protocol: TCP
+      health:
+        initialDelaySeconds: 30
+        periodSeconds: 60
+      # Parameters for game server sidecar
+      sdkServer:
+        logLevel: Info
+        grpcPort: 9357
+        httpPort: 9358
+      # The GameServer's Pod template
+      template:
+        spec:
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            fsGroup: 1000
+          containers:
+          - name: gameserver
+            image: __IMAGE_TAG__
+            imagePullPolicy: Always
+            resources:
+              requests:
+                cpu: 3500m
+                memory: 12Gi
+            ports:
+            - name: remote-api
+              containerPort: 8080
+              protocol: TCP
+            env:
+              - name: WINEDEBUG
+                value: "-all"
+            volumeMounts:
+              - name: gameserver-data
+                mountPath: /appdata/space-engineers/SpaceEngineersDedicated/Saves
+                subPath: saves
+              - name: gameserver-config
+                mountPath: /appdata/space-engineers/SpaceEngineersDedicated/SpaceEngineers-Dedicated.cfg
+                subPath: SpaceEngineers-Dedicated.cfg
+              - name: gameserver-cache
+                mountPath: /appdata/space-engineers/SpaceEngineersDedicated/
+                subPath: gameserver
+              - name: gameserver-cache
+                mountPath: /root/.steam
+                subPath: steamcmd
+          volumes:
+            - name: gameserver-data
+              persistentVolumeClaim:
+                claimName: space-engineers-data
+            - name: gameserver-cache
+              persistentVolumeClaim:
+                claimName: space-engineers-cache
+            - name: gameserver-config
+              secret:
+                secretName: space-engineers-config

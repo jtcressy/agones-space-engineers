@@ -31,6 +31,31 @@ func main() {
 	args := flag.String("args", "", "additional arguments to pass to the script")
 	flag.Parse()
 
+	savesDir := "/appdata/space-engineers/SpaceEngineersDedicated/Saves"
+	if ok,err := isEmpty(savesDir); ok {
+		message := fmt.Sprintf(">>> Saves directory is empty! (%v)\n", savesDir)
+		message += fmt.Sprintf(">>> Shell into the pod, copy/download a save file, then restart.\n")
+		
+		deadline := time.Now().Add(time.Hour)
+	
+		for range time.Tick(1 * time.Second) {
+			timeRemaining := getTimeRemaining(deadline)
+	
+			if timeRemaining.t <= 0 {
+				fmt.Println("Countdown reached!")
+				break
+			}
+	
+			fmt.Printf(message + ">>> Holding the door open for you to shell in... Minutes: %d Seconds: %d\n", timeRemaining.m, timeRemaining.s)
+		}
+		fmt.Println("")
+	} else {
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf(">>> Saves directory is not empty, continuing with startup! (%v)\n", savesDir)
+	}
+
 	argsList := strings.Split(strings.Trim(strings.TrimSpace(*args), "'"), " ")
 	fmt.Println(">>> Connecting to Agones with the SDK")
 	s, err := sdk.NewSDK()
@@ -86,5 +111,46 @@ func doHealth(sdk *sdk.SDK) {
 			log.Fatalf("[wrapper] Could not send health ping, %v", err)
 		}
 		<-tick
+	}
+}
+
+func isEmpty(name string) (bool, error) {
+    f, err := os.Open(name)
+    if err != nil {
+        return false, err
+    }
+    defer f.Close()
+
+    _, err = f.Readdirnames(1) // Or f.Readdir(1)
+    if err == io.EOF {
+        return true, nil
+    }
+    return false, err // Either not empty or error, suits both cases
+}
+
+type countdown struct {
+	t int
+	d int
+	h int
+	m int
+	s int
+}
+
+func getTimeRemaining(t time.Time) countdown {
+	currentTime := time.Now()
+	difference := t.Sub(currentTime)
+
+	total := int(difference.Seconds())
+	days := int(total / (60 * 60 * 24))
+	hours := int(total / (60 * 60) % 24)
+	minutes := int(total/60) % 60
+	seconds := int(total % 60)
+
+	return countdown{
+		t: total,
+		d: days,
+		h: hours,
+		m: minutes,
+		s: seconds,
 	}
 }

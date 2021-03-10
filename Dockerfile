@@ -15,14 +15,14 @@ FROM debian:buster-20201117
 
 WORKDIR /root
 
-COPY winetricks.sh entrypoint.sh /root/
 
 ENV WINEARCH=win64
 ENV WINEDEBUG=-all
 ENV WINEPREFIX=/root/server
 ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 
-RUN chmod +x /root/entrypoint.sh && chmod +x /root/winetricks.sh
+COPY winetricks.sh /root/
+RUN chmod +x winetricks.sh
 
 # Add i386 architecture support
 # Add non-free repo for steamcmd
@@ -79,6 +79,9 @@ RUN dpkg --add-architecture i386 && \
 
 COPY --from=builder /go/src/space-engineers/wrapper .
 RUN chmod +x wrapper
+
+COPY entrypoint.sh /root/
+RUN chmod +x /root/entrypoint.sh
 
 ENTRYPOINT /root/wrapper -i /root/entrypoint.sh
 # TODO: identify server "ready" state and program wrapper to 

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: space-engineers-data
+  namespace: gameservers
+spec:
+  resources:
+    requests:
+      storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: space-engineers-cache
+  namespace: gameservers
+spec:
+  resources:
+    requests:
+      storage: 15Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
