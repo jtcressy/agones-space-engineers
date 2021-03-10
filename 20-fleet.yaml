@@ -51,8 +51,8 @@ spec:
             imagePullPolicy: Always
             resources:
               requests:
-                cpu: 3500m
-                memory: 12Gi
+                cpu: 2000m
+                memory: 2Gi
             ports:
             - name: remote-api
               containerPort: 8080
