@@ -21,14 +21,20 @@ spec:
     # GameServer specification
     spec:
       ports:
-      - name: default
+      - name: gameserver
+        portPolicy: Static
+        hostPort: 27016
+        containerPort: 27016
+        protocol: TCP
+      - name: gameserver-udp
         portPolicy: Static
         hostPort: 27016
         containerPort: 27016
         protocol: UDP
       - name: remote-api
-        portPolicy: Dynamic
-        containerPort: 8080
+        portPolicy: Static
+        hostPort: 18080
+        containerPort: 9090
         protocol: TCP
       health:
         initialDelaySeconds: 30
@@ -53,10 +59,9 @@ spec:
               requests:
                 cpu: 1500m
                 memory: 2Gi
-            ports:
-            - name: remote-api
-              containerPort: 8080
-              protocol: TCP
+              limits:
+                cpu: 4000m
+                memory: 6Gi
             env:
               - name: WINEDEBUG
                 value: "-all"
